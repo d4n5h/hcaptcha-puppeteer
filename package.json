@@ -2,12 +2,20 @@
   "name": "hcaptcha",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "hcaptcha.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/d4n5h/hcaptcha.git"
+  },
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/d4n5h/hcaptcha/issues"
+  },
+  "homepage": "https://github.com/d4n5h/hcaptcha#readme",
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.2",
     "@tensorflow/tfjs-node": "^3.13.0",
