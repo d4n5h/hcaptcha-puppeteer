@@ -1,1 +1,1 @@
-# hcaptcha
+# hcaptcha-puppeteer
