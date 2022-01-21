@@ -20,11 +20,12 @@ puppeteer.use(pluginStealth());
  * @returns response token
  */
 const getHSL = async (req) => {
+
     version = jwt_decode(req)["l"].slice(
         "https://newassets.hcaptcha.com/c/".length
     );
-    const hsl = await axios.get(`${jwt_decode(req)["l"]}/hsl.js`);
-
+    let hsl = await axios.get(`${jwt_decode(req)["l"]}/hsl.js`);
+    hsl = hsl.data
     const browser = await puppeteer.launch({
         ignoreHTTPSErrors: true,
         headless: true,
@@ -60,7 +61,8 @@ const getHSW = async (req) => {
     version = jwt_decode(req)["l"].slice(
         "https://newassets.hcaptcha.com/c/".length
     );
-    const hsw = await axios.get(`${jwt_decode(req)["l"]}/hsw.js`);
+    let hsw = await axios.get(`${jwt_decode(req)["l"]}/hsw.js`);
+    hsw = hsw.data;
 
     const browser = await puppeteer.launch({
         ignoreHTTPSErrors: true,
@@ -84,7 +86,6 @@ const getHSW = async (req) => {
 
     const response = await page.evaluate(`hsw("${req}")`);
     await browser.close();
-
     return response;
 };
 
@@ -103,6 +104,8 @@ const getAnswersTF = async (request_image, tasks) => {
 
     try {
         await Promise.all(threads).then((results) => {
+
+
             results.forEach((res, index) => {
                 let [data] = res;
 
@@ -131,6 +134,7 @@ const getAnswersTF = async (request_image, tasks) => {
  * @returns hCaptcha solved token
  */
 const tryToSolve = async (userAgent, sitekey, host) => {
+
     // Create headers
     let headers = {
         Authority: "hcaptcha.com",
@@ -149,6 +153,9 @@ const tryToSolve = async (userAgent, sitekey, host) => {
         headers: headers
     });
 
+    response = response.data;
+
+
     let timestamp = Date.now() + rdn(30, 120);
 
     // Check for HSJ
@@ -156,6 +163,10 @@ const tryToSolve = async (userAgent, sitekey, host) => {
         console.error("Wrong Challenge Type. Retrying.");
         return null;
     }
+
+    ;
+
+    let form = {};
 
     // Setup form for getting tasks list
     if (response.c === undefined) {
@@ -188,9 +199,22 @@ const tryToSolve = async (userAgent, sitekey, host) => {
     }
 
     // Get tasks
-    let getTasks = await axios.post(`https://hcaptcha.com/getcaptcha?s=${sitekey}`, form, {
+
+    const params = new URLSearchParams()
+
+    const keys = Object.keys(form)
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const value = form[key];
+        params.append(key, value)
+    }
+    let getTasks = await axios.post(`https://hcaptcha.com/getcaptcha?s=${sitekey}`, params, {
         headers: headers
     });
+
+    getTasks = getTasks.data;
+
+
 
     if (getTasks.generated_pass_UUID) {
         return getTasks.generated_pass_UUID;
@@ -217,10 +241,14 @@ const tryToSolve = async (userAgent, sitekey, host) => {
     // Get Answers
     const answers = await getAnswersTF(request_image, tasks);
 
+    // console.log('Answers:', answers);
+
     // Renew response
     response = await axios.get(`https://hcaptcha.com/checksiteconfig?host=${host}&sitekey=${sitekey}&sc=1&swa=1`, {
         headers: headers
     });
+
+    response = response.data;
 
     // Setup data for checking answers
     if (response.c === undefined) {
@@ -271,9 +299,11 @@ const tryToSolve = async (userAgent, sitekey, host) => {
     };
 
     // Check answers
-    const checkAnswers = await axios.post(
+    let checkAnswers = await axios.post(
         `https://hcaptcha.com/checkcaptcha/${key}?s=${sitekey}`, captchaResponse, { headers: headers }
     );
+
+    checkAnswers = checkAnswers.data;
 
     if (checkAnswers.generated_pass_UUID) {
         return checkAnswers.generated_pass_UUID;
@@ -303,6 +333,7 @@ const solveCaptcha = async (siteKey, host) => {
                 siteKey,
                 host
             );
+
             if (result && result !== null) {
                 return result;
             }
@@ -340,7 +371,6 @@ const hcaptcha = async (page) => {
             urlParams.get("host")
         );
     });
-
     await page.evaluate((token) => {
         document.querySelector('[name="h-captcha-response"]').value = token;
     }, token);

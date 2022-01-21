@@ -1,7 +1,7 @@
 const { path } = require("ghost-cursor");
 const tf = require('@tensorflow/tfjs-node');
 const cocoSsd = require('@tensorflow-models/coco-ssd');
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 /**
  * @description Randomize Function
@@ -20,10 +20,13 @@ function rdn(start, end) {
  */
 const tensor = async (imgURL) => {
   try {
-    const blob = await fetch(imgURL)
-      .then((res) => res.buffer())
-      .catch((err) => console.log(err));
+    let blob = await axios
+      .get(imgURL, {
+        responseType: 'arraybuffer'
+      })
 
+    blob = blob.data;
+    
     // Load the model.
     const model = await cocoSsd.load();
 
